@@ -3,11 +3,10 @@ FROM golang:1.23 AS builder
 
 WORKDIR /workspace
 
-ADD go.mod .
-ADD go.sum .
+COPY go.mod go.sum .
 RUN go mod download
 
-ADD . .
+COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o config-reloader-sidecar .
 
 # UPX compression
