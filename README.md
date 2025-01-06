@@ -2,6 +2,8 @@
 
 A small (3MB uncompressed docker image), efficient (via inotify) sidecar to trigger application reloads when configuration changes.
 
+This fork add an *automatic build via Github Actions*, as well as support for ARM devices like Raspberry Pi by using a drastically *newer version of UPX* as packer.
+
 ## Rationale
 
 A fairly common way to implement configuration hot-reloading is to have the app re-read configuration files when receiving a specific [unix signal](https://en.wikipedia.org/wiki/Signal_(IPC)), usually [SIGHUP](https://en.wikipedia.org/wiki/SIGHUP).
@@ -16,6 +18,7 @@ Applications using this method include:
 - [logstash](https://www.elastic.co/guide/en/logstash/current/reloading-config.html)
 - [postgresql](https://www.postgresql.org/docs/current/app-pg-ctl.html)
 - [pgbouncer](https://www.pgbouncer.org/usage.html#signals)
+- [traefik](https://github.com/traefik/traefik/pull/9993)
 
 In Kubernetes, the "recommended" / usual way of managing configuration is instead to:
 - Have a ConfigMap (or Secret) holding the configuration
@@ -76,6 +79,22 @@ spec:
   - name: secret-volume
     secret:
       secretName: pgbouncer-secret
+```
+
+## Example Docker Compose configuration
+
+```yaml
+  ssl-change-refresher:
+    image: ghcr.io/nettnikl/config-reloader-sidecar:main
+    restart: unless-stopped
+    pid: "service:traefik"
+    depends_on:
+      - traefik
+    environment:
+      CONFIG_DIR: /config/
+      PROCESS_NAME: traefik
+    volumes:
+      - ./config:/config:ro
 ```
 
 ## Gotchas
